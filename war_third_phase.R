@@ -1,0 +1,339 @@
+library(pacman)
+p_load(tidyverse, maps, scales, ggmap)
+p_load(acled.api, gt, usethis, rgdal, sp)
+<<<<<<< HEAD
+#p_load(rlang, update = T)
+# update the R_ENVIRON file if necessary
+
+#usethis::edit_r_environ()
+=======
+# update the R_ENVIRON file if necessary
+# usethis::edit_r_environ()
+>>>>>>> f0ccfa2f65b010ec20955b8bf46c512e7b1e7f15
+
+# load in the data
+df <- acled.api(
+  email.address = Sys.getenv("ACLED_EMAIL")
+  , access.key = Sys.getenv("ACLED_API_KEY")
+  , country = "Ukraine"
+  , start.date = "2022-02-24"
+  , end.date = Sys.Date()
+  , all.variables = T
+)
+
+# copy the data so multiple calls don't have to be made
+war <- df
+
+# glimpse
+war %>% glimpse
+
+# make event_date a date object
+# make longitude/latitude numeric
+war <- war %>% mutate(event_date = as.Date(event_date)
+                      , longitude = as.numeric(longitude)
+                      , latitude = as.numeric(latitude))
+
+# earliest and latest date in the data
+range(war$event_date)
+
+# ----------
+# ANALYSIS
+# ----------
+# Understand what's going on
+unique(war$event_type)
+unique(war$sub_event_type)
+
+# group by event types
+(events <- war %>% group_by(event_type, sub_event_type) %>% 
+    summarise(n=n()) %>%
+    arrange(n %>% desc) %>% ungroup() %>%
+<<<<<<< HEAD
+    mutate(prop = round((n / sum(n)),2)))
+=======
+    mutate(prop = round((n / sum(n)),2)) %>%
+    filter(n >= 10))
+>>>>>>> f0ccfa2f65b010ec20955b8bf46c512e7b1e7f15
+
+# column chart of event types
+events %>% group_by(event_type) %>% summarise(total_prop = sum(prop)) %>% 
+  arrange(total_prop %>% desc()) %>% ggplot() +
+  geom_col(aes(reorder(event_type, total_prop)
+               , total_prop)) + coord_flip() +
+<<<<<<< HEAD
+  ggtitle("Proportion of Event Types"
+          , subtitle = paste0("data from: ", min(war$event_date), " to ", max(war$event_date))) +
+=======
+  ggtitle("Proportions of Event Types") +
+>>>>>>> f0ccfa2f65b010ec20955b8bf46c512e7b1e7f15
+  theme(axis.title = element_blank())
+
+# sub_events
+(sub_events <- war %>% group_by(sub_event_type) %>% summarise(n=n()) %>%
+    mutate(prop = n/sum(n)) %>% arrange(prop %>% desc))
+
+# col plot of sub_events
+(sub_events %>% filter(prop > 0.01) %>% ggplot() +
+    geom_col(aes(reorder(sub_event_type, prop)
+                 , prop)) + coord_flip() +
+    theme(axis.title = element_blank()))
+
+# filter by shelling - artillery - missile attacks (sam)
+sam <- war %>% filter(event_type == "Explosions/Remote violence")
+
+# who are the actors? 
+(war %>% group_by(actor1, actor2) %>% 
+    summarise(n=n()) %>% 
+    arrange(n %>% desc()))
+
+# filter for actor1 = Russia OR Ukraine
+sam_rus <- sam %>% filter(actor1 == "Military Forces of Russia (2000-)"
+                          | actor1 == "Military Forces of Ukraine (2019-)")
+
+# change colors so red = russia, blue = ukraine
+colors = if_else(sam_rus$actor1 == "Military Forces of Russia (2000-)"
+                 , '#DA291C'
+                 , '#0057B8')
+
+# Plot a map of Ukraine
+par(mar = c(0,0,0,0))
+ykr <- raster::getData('GADM', country = "UKR", level = 1)
+map(ykr)
+
+# calculate the raduius of the points (by fatalities)
+radius <- sqrt(sam_rus$fatalities/pi)
+
+# plot the points
+points(sam_rus$longitude
+       , sam_rus$latitude
+       , col = alpha(colors, 0.25)
+       , cex = rescale(radius, c(0,5))
+       , pch = 20)
+
+# write a function to plot the map w/points
+ukr_map <- function(df, cols){
+  ykr <- raster::getData('GADM', country = "UKR", level = 1)
+  map(ykr)
+  # calculate the raduius of the points (by fatalities)
+  radius <- sqrt(df$fatalities/pi)
+  # plot the points
+  points(df$longitude
+         , df$latitude
+         , col = alpha(cols, 0.25)
+         , cex = rescale(radius, c(0,5))
+         , pch = 20)}
+
+
+# =======
+# Battles
+# =======
+battles <- war %>% filter(event_type == "Battles"
+                           , actor1 == "Military Forces of Russia (2000-)"
+                           | actor1 == "Military Forces of Ukraine (2019-)")
+
+# view the map
+
+# =========
+# Air Force
+# =========
+af <- war2 %>% filter(actor1 %in% 
+                        c("Military Forces of Russia (2000-) Air Force"
+                          , "Military Forces of Ukraine (2019-) Air Force"))
+# map
+ukr_map(af, colors)
+
+
+qmplot(longitude, latitude, data = sam_rus
+       , maptype = "toner-hybrid") +
+  geom_point(
+    aes(longitude, latitude, size = sqrt((fatalities/pi)))
+    , color = alpha('#DA291C', 0.25)
+  ) + theme(legend.position = 'none')
+
+# =======================
+# register the Google key
+# =======================
+<<<<<<< HEAD
+# register_google(key = Sys.getenv("GGMAP_GOOGLE_API_KEY"), write = T)
+
+# this is a map using Kyiv as the central point
+=======
+#register_google(key = Sys.getenv("GGMAP_GOOGLE_API_KEY"), write = T)
+
+>>>>>>> f0ccfa2f65b010ec20955b8bf46c512e7b1e7f15
+get_map(location = c(32.059767, 49.444433)
+        , zoom = 6
+        , maptype = "roadmap"
+        , color = 'bw') %>% 
+  
+  ggmap()
+
+<<<<<<< HEAD
+# create the boundries for the entire state of Ukraine
+=======
+>>>>>>> f0ccfa2f65b010ec20955b8bf46c512e7b1e7f15
+kyiv <- get_map(location = c(left=22, bottom=44.25, right = 40.5, top=52.5))
+
+# create a blank map
+(kyiv_map <- get_stamenmap(bb2bbox(attr(kyiv, "bb"))
+                           , maptype = "toner-background"
+                           , zoom = 6) %>% ggmap() +
+  theme(axis.title = element_blank()
+        , axis.text = element_blank()
+        , axis.ticks = element_blank()))
+
+# plot the points!
+(point_map <- kyiv_map + 
+    geom_point(aes(as.numeric(longitude), as.numeric(latitude))
+               , data = war
+               , size = rescale(sqrt(war$fatalities/pi), to = c(1,10))
+               , color = alpha(colors.war, 0.5)))
+
+point_map + facet_wrap(~event_type)
+
+# density map
+kyiv_map + 
+  stat_density2d(data = war, aes(as.numeric(longitude)
+                                     , as.numeric(latitude)
+                                     , fill = ..level..)
+                 , geom = "polygon"
+                 , alpha = .5) +
+  scale_fill_gradient2(low = "white", mid = "yellow", high = "red")
+  
+
+
+# change colors so red = russia, blue = ukraine
+# this for battles
+colors.b = if_else(battles$actor1 == "Military Forces of Russia (2000-)"
+                 , '#DA291C'
+                 , '#0057B8')
+
+# plot the map
+(battles_map <- get_stamenmap(bb2bbox(attr(kyiv, "bb")), maptype = "toner-lite", zoom = 6) %>% 
+    ggmap() + 
+    geom_point(aes(as.numeric(longitude), as.numeric(latitude))
+               , data = battles
+               , size = rescale(sqrt(battles$fatalities/pi), to = c(.75,10))
+               , color = alpha(colors.b, 0.5)))
+# =============================
+# do it for all of the war data
+# =============================
+colors.war <- case_when(str_detect(war$actor1, "Russia") == TRUE ~ '#DA291C'
+                        , str_detect(war$actor1, "Ukraine") == TRUE ~ '#0057B8'
+                        , str_detect(war$actor1, "Novorossiya") == TRUE ~ "purple"
+                        , TRUE ~ "orange")
+
+# plot the map
+get_stamenmap(bb2bbox(attr(kyiv, "bb")), maptype = "toner-lite", zoom = 6) %>% 
+  ggmap() + 
+  geom_point(aes(as.numeric(longitude), as.numeric(latitude))
+             , data = war
+             , size = rescale(sqrt(war$fatalities/pi), to = c(1,10))
+             , color = alpha(colors.war, 0.5))
+<<<<<<< HEAD
+
+=======
+>>>>>>> f0ccfa2f65b010ec20955b8bf46c512e7b1e7f15
+# figure out where the orange stuff is
+war.colors <- war2 %>% mutate("color" = colors.war)
+war.colors %>% filter(color == "orange") %>% select(actor1) %>% unique()
+
+# =============================
+# RAILS
+# =============================
+# import the railways shapefile
+rail <- readOGR("shape_files/railways/railways.shp")
+rail@data$type %>% unique
+
+# Plot a map of Ukraine
+par(mar = c(0,0,0,0))
+ykr <- raster::getData('GADM', country = "UKR", level = 0)
+map(ykr)
+
+plot(rail,add=T)
+
+points(sam_rus$longitude
+       , sam_rus$latitude
+       , col = alpha(colors, 0.25)
+       , cex = rescale(radius, c(0,5))
+       , pch = 20)
+
+# import the roads shapefile 
+roads = readOGR('shape_files/roads/roads.shp')
+map(ykr)
+plot(roads, add=T)
+
+points(sam_rus$longitude
+       , sam_rus$latitude
+       , col = alpha(colors, 0.25)
+       , cex = rescale(radius, c(0,5))
+       , pch = 20)
+
+# ====================================================
+# GGMAP
+# ====================================================
+roads_df <- spTransform(roads,CRS("+proj=longlat +datum=WGS84 +no_defs")) %>% 
+  fortify()
+# turn the rail data into a df
+rail_df <- spTransform(rail, CRS("+proj=longlat +datum=WGS84 +no_defs")) %>%
+  fortify()
+
+# plot the map
+kyiv_map + 
+  # add the roads onto the map
+  geom_path(data = roads_df, mapping = aes(long, lat, group = group)
+            , color = "grey") +
+  # add the rail lines on the map
+  geom_path(data = rail_df, mapping = aes(long, lat, group = group)) +
+  # plot the points onto the map
+  geom_point(data = war
+             , mapping = aes(as.numeric(longitude)
+                             , as.numeric(latitude))
+             , size = rescale(sqrt(war$fatalities/pi), c(1,8))
+             , color = alpha(colors.war, 0.5)) + 
+  # remove the axis labels
+  theme(axis.title = element_blank()
+        , axis.ticks = element_blank()
+        , axis.text = element_blank())
+
+# add roads and rails to BATTLES
+battles + 
+  # add the roads onto the map
+  geom_path(data = roads_df, mapping = aes(long, lat, group = group)
+            , color = "grey") +
+  # add the rail lines on the map
+  geom_path(data = rail_df, mapping = aes(long, lat, group = group))
+
+
+(battles_map <- get_stamenmap(bb2bbox(attr(kyiv, "bb")), maptype = "toner-lite", zoom = 6) %>% 
+    ggmap() + 
+    # add the roads onto the map
+    geom_path(data = roads_df, mapping = aes(long, lat, group = group)
+              , color = "grey") +
+    # add the rail lines on the map
+    geom_path(data = rail_df, mapping = aes(long, lat, group = group)) +
+  
+    geom_point(aes(as.numeric(longitude), as.numeric(latitude))
+               , data = battles
+               , size = rescale(sqrt(battles$fatalities/pi), to = c(1,10))
+               , color = alpha(colors.b, 0.5)) +
+    theme(axis.text = element_blank()
+          , axis.title = element_blank()
+          , axis.ticks = element_blank())) 
+
+
+# # buildings
+# buildings <- readOGR("shape_files/buildings/buildings.shp")
+# map(ykr)
+# plot(buildings, add=T)
+# 
+# # natural features
+# nf <- readOGR("shape_files/natural_features/natural.shp")
+# map(ykr)
+# plot(nf, add=T)
+
+
+
+
+
+
+
