@@ -1,15 +1,15 @@
 library(pacman)
 p_load(tidyverse, maps, scales, ggmap)
 p_load(acled.api, gt, usethis, rgdal, sp)
-<<<<<<< HEAD
+
 #p_load(rlang, update = T)
 # update the R_ENVIRON file if necessary
 
 #usethis::edit_r_environ()
-=======
+
 # update the R_ENVIRON file if necessary
 # usethis::edit_r_environ()
->>>>>>> f0ccfa2f65b010ec20955b8bf46c512e7b1e7f15
+
 
 # load in the data
 df <- acled.api(
@@ -44,27 +44,27 @@ unique(war$event_type)
 unique(war$sub_event_type)
 
 # group by event types
-(events <- war %>% group_by(event_type, sub_event_type) %>% 
+events <- war %>% group_by(event_type, sub_event_type) %>% 
     summarise(n=n()) %>%
     arrange(n %>% desc) %>% ungroup() %>%
-<<<<<<< HEAD
-    mutate(prop = round((n / sum(n)),2)))
-=======
+
+    mutate(prop = round((n / sum(n)),2))
+
     mutate(prop = round((n / sum(n)),2)) %>%
-    filter(n >= 10))
->>>>>>> f0ccfa2f65b010ec20955b8bf46c512e7b1e7f15
+    filter(n >= 10)
+
 
 # column chart of event types
 events %>% group_by(event_type) %>% summarise(total_prop = sum(prop)) %>% 
   arrange(total_prop %>% desc()) %>% ggplot() +
   geom_col(aes(reorder(event_type, total_prop)
                , total_prop)) + coord_flip() +
-<<<<<<< HEAD
+
   ggtitle("Proportion of Event Types"
           , subtitle = paste0("data from: ", min(war$event_date), " to ", max(war$event_date))) +
-=======
+
   ggtitle("Proportions of Event Types") +
->>>>>>> f0ccfa2f65b010ec20955b8bf46c512e7b1e7f15
+
   theme(axis.title = element_blank())
 
 # sub_events
@@ -152,14 +152,14 @@ qmplot(longitude, latitude, data = sam_rus
 # =======================
 # register the Google key
 # =======================
-<<<<<<< HEAD
+
 # register_google(key = Sys.getenv("GGMAP_GOOGLE_API_KEY"), write = T)
 
 # this is a map using Kyiv as the central point
-=======
+
 #register_google(key = Sys.getenv("GGMAP_GOOGLE_API_KEY"), write = T)
 
->>>>>>> f0ccfa2f65b010ec20955b8bf46c512e7b1e7f15
+
 get_map(location = c(32.059767, 49.444433)
         , zoom = 6
         , maptype = "roadmap"
@@ -167,10 +167,8 @@ get_map(location = c(32.059767, 49.444433)
   
   ggmap()
 
-<<<<<<< HEAD
+
 # create the boundries for the entire state of Ukraine
-=======
->>>>>>> f0ccfa2f65b010ec20955b8bf46c512e7b1e7f15
 kyiv <- get_map(location = c(left=22, bottom=44.25, right = 40.5, top=52.5))
 
 # create a blank map
@@ -229,10 +227,7 @@ get_stamenmap(bb2bbox(attr(kyiv, "bb")), maptype = "toner-lite", zoom = 6) %>%
              , data = war
              , size = rescale(sqrt(war$fatalities/pi), to = c(1,10))
              , color = alpha(colors.war, 0.5))
-<<<<<<< HEAD
 
-=======
->>>>>>> f0ccfa2f65b010ec20955b8bf46c512e7b1e7f15
 # figure out where the orange stuff is
 war.colors <- war2 %>% mutate("color" = colors.war)
 war.colors %>% filter(color == "orange") %>% select(actor1) %>% unique()
