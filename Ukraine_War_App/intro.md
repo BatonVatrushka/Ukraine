@@ -1,0 +1,1 @@
+Russia invaded Ukraine on 24 February 2022. What was supposed to be a quick victory (based on faulty assumptions) has become the most significant European land war since WWII. This map tracks the battles (armed clashes) and use of fires (shelling/artillery/missile attack) because they account for the most significant proportion of record events in the war. 

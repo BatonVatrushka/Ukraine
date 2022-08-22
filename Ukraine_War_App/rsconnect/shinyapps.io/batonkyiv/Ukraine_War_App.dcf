@@ -1,0 +1,14 @@
+name: Ukraine_War_App
+title: Ukraine_War_App
+username:
+account: batonkyiv
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6810782
+bundleId: 6223856
+url: https://batonkyiv.shinyapps.io/Ukraine_War_App/
+when: 1661130791.87847
+lastSyncTime: 1661130791.87848
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: intro.md
