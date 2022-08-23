@@ -62,16 +62,24 @@ ui <- navbarPage("Ukraine’s War Against Russian Occupation"
                                  , bottom = "auto"
                                  , width = 300
                                  , height = "auto"
-                                 
-                                 # , h6("Select Date Range"
-                                 #      , .noWS = "after-begin")
-                                 
                                  , dateRangeInput("date"
                                                , label = "Select Date Range"
                                               , start = min(df_sub$event_date)
                                               , end = max(df_sub$event_date)
                                               , width = 350)
-                 )))
+                 ))
+                 
+                 , tabPanel(title = "Event Analysis"
+                            
+                            , sidebarPanel(width = 3
+                                           , dateRangeInput("line_date"
+                                                            , label = "Select Date Range"
+                                                            , start = min(war$event_date)
+                                                            , end = max(war$event_date))
+                                           , includeMarkdown("intro.md"))
+                            
+                            , mainPanel(plotOutput("line_graph", height = 600)))
+                 )
 
 #-------------------------------------------------------------------------------
 # SERVER CODE
@@ -126,6 +134,33 @@ server <- function(input, output) {
       setView(lng = 32, lat = 48, zoom = 6)
   })
   
+  output$line_graph <- renderPlot({
+    war |> 
+      filter(!event_type %in% c("Protests", "Riots")) |>
+      filter(event_date >= input$line_date[1] 
+             & event_date <= input$line_date[2]) |>
+      group_by(event_date, event_type) |> 
+      tally() |>
+      arrange(desc(n)) |> 
+      ggplot(aes(event_date, n, color = event_type)) +
+      geom_line(alpha = 0.4, lwd = 1.25) + 
+      stat_smooth(method = "loess", se = F) +
+      theme(axis.title = element_blank()
+            , legend.position = "none"
+            , panel.background = element_rect(fill = "white")
+            , panel.grid = element_line(colour = alpha("grey", 0.25))
+            , plot.title = element_text(size = 20)
+            , strip.text = element_text(size = 14)) +
+      scale_color_manual(values = c("#0057B7"
+                                    , "#EF3340"
+                                    , "#552583"
+                                    , "#00cc00")) +
+      ggtitle("Number of Daily Recorded Events") + 
+      scale_x_date(breaks = '1 month'
+                   , date_labels = "%b-%y") +
+      facet_wrap(~event_type)
+    
+  })
 }
 
 # Run the application 

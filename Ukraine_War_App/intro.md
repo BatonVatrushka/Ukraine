@@ -1,1 +1,7 @@
-Russia invaded Ukraine on 24 February 2022. What was supposed to be a quick victory (based on faulty assumptions) has become the most significant European land war since WWII. This map tracks the battles (armed clashes) and use of fires (shelling/artillery/missile attack) because they account for the most significant proportion of record events in the war. 
+These graphs represent the daily count of occurrences of different types of events. 
+
+as of August 2022 Explosions/Remote violence include shelling, artillery, missile attacks, drone strikes, landmines, and IEDs, accounting for ~76% of recorded events. 
+
+Battles account for ~16% of historical events 
+
+Strategic Developments (arrests, agreements, non-violent transfer of territory) account for ~5% of recorded events, and violence against civilians is ~2%. There are other event types in the data, but the number of observations is too insignificant to display graphically.  
