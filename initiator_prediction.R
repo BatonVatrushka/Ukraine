@@ -1,23 +1,13 @@
 # predict initiator 
 # install.packages("caret")
 library(pacman)
-p_load(tidyverse, caret, MLmetrics, acled.api)
+p_load(tidyverse, caret, MLmetrics, acled.api, caTools)
 
-# load in the data
-# df <- acled.api(
-#   email.address = Sys.getenv("ACLED_EMAIL")
-#   , access.key = Sys.getenv("ACLED_API_KEY")
-#   , country = "Ukraine"
-#   , start.date = "2022-02-24"
-#   , end.date = Sys.Date()
-#   , all.variables = T
-# )
 #==================
 # Data Cleaning
 #==================
 # read in the data
 war <- read_csv(file = 'war.csv')
-#war <- df
 
 # actor1 will be the response variable
 war |> group_by(actor1) |>
@@ -41,8 +31,18 @@ war$initiator |> table()
 war |> glimpse()
 
 # select for the necessary fields
-df <- war |> select(initiator, event_type, sub_event_type
-                    , latitude, longitude, fatalities) |>
+df <- war |> 
+  # replace nas in admin1 w/ the location field
+  mutate(admin1 = coalesce(admin1, location)) |>
+  # select the fields for modeling
+  select(initiator
+         , event_type
+         , sub_event_type
+         , latitude
+         , longitude
+         , admin1
+         , fatalities) |>
+  # remove the fields where U or R isn't the initiator
   filter(initiator != "O") |>
   # turn character fields to factors
   mutate_if(is.character, as.factor) 
@@ -53,7 +53,7 @@ df |> glimpse()
 #==================
 # Model Building
 #==================
-# define a cumstom trainControl
+# define a custom trainControl
 control <- trainControl(
   method = "cv",
   number = 5,
@@ -76,14 +76,15 @@ model <- train(
   , trControl = control
 )
 
-# Print model to console
-model
+# plot(model)
+plot(model)
 
 # Print maximum ROC statistic
 max(model[["results"]][3])
 
 # make predictions
 pred <- predict(model, df |> select(-initiator))
+
 # confusion matrix
 glmnet_cm <- confusionMatrix(pred, df$initiator)
 glmnet_cm[[3]][1]
@@ -126,7 +127,7 @@ knn_predict <- predict(model_knn, df |> select(-initiator))
 knn_cm <- confusionMatrix(knn_predict, df$initiator)
 knn_cm[[3]][1]
 
-# KNN w/ cener and scale
+# KNN w/ center and scale
 model_knn_cs <- train(
   initiator ~ .
   , df
@@ -145,7 +146,7 @@ knn_scaled_cm[[3]][1]
 # -------------------
 # RF
 # -------------------
-model_svm <- train(
+model_rf <- train(
   initiator ~ .
   , df
   , metric = "ROC"
@@ -154,12 +155,14 @@ model_svm <- train(
 )
 
 # predict
-rf_predict <- predict(model_svm, df |> select(-initiator))
+rf_predict <- predict(model_rf, df |> select(-initiator))
 # confusion matrix
 rf_cm <- confusionMatrix(rf_predict, df$initiator)
 rf_cm[[3]][1]
 
+# -------------------
 # rda
+# -------------------
 model_rda <- train(
   initiator ~ .
   , df
@@ -174,7 +177,9 @@ rda_predict <- predict(model_svm, df |> select(-initiator))
 rda_cm <- confusionMatrix(rda_predict, df$initiator)
 rda_cm[[3]][1]
 
+# -------------------
 # Neural Network
+# -------------------
 model_nn <- train(
   initiator ~ .
   , df
@@ -188,3 +193,28 @@ nn_predict <- predict(model_nn, df |> select(-initiator))
 # confusion matrix
 neu_cm <- confusionMatrix(nn_predict, df$initiator)
 neu_cm[[3]][1]
+
+# make some predictions
+x <- df[1, -1]
+predict(model_rf, x)
+
+y <- df[500, -1]
+predict(model_rf, y)
+
+z <- df[2755, -1]
+predict(model_rf, z)
+
+# =========
+# PLOT ROC
+# =========
+p <- predict(model_rf, df[, -1], type = "prob")
+colAUC(p, df[["initiator"]], plotROC = T)
+
+pnn <- predict(model_knn, df[, -1], type = "prob")
+colAUC(p, df[["initiator"]], plotROC = T)
+
+# ==========
+# Save Model
+# ==========
+# model will be saved into the Shiny directory
+save(model_rf, file = "./Ukraine_War_App/model_rf.rda")

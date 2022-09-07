@@ -5,9 +5,9 @@ account: batonkyiv
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 6810782
-bundleId: 6227377
+bundleId: 6275447
 url: https://batonkyiv.shinyapps.io/Ukraine_War_App/
-when: 1661213818.47066
-lastSyncTime: 1661213818.47066
+when: 1662500692.74903
+lastSyncTime: 1662500692.74904
 asMultiple: FALSE
 asStatic: FALSE
